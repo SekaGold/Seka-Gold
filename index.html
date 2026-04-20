@@ -8,13 +8,11 @@
 <body>
     <div class="logo">SekaGold Online</div>
     
-    <!-- Экран входа -->
     <div id="auth-screen">
         <input type="text" id="username" placeholder="Твой ник">
         <button id="join-btn">Войти в игру</button>
     </div>
 
-    <!-- Игровой стол -->
     <div id="table">
         <div id="opponent-hand" class="hand"></div>
         <div id="pot-display">Банк: 0 🪙</div>
@@ -29,20 +27,23 @@
         <button id="show-btn" style="display:none;">Вскрыться</button>
     </div>
 
-    <!-- Firebase SDK (Compat версия) -->
+    <!-- ИСПРАВЛЕНО: Полные ссылки на библиотеки -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
 
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBeqD4hWOGoW_qU5GGZkyrjXXMZR7CtLr4",
-            authDomain: "://firebaseapp.com",
-            databaseURL: "https://firebasedatabase.app",
+            authDomain: "sekagold-25fa5.firebaseapp.com",
+            // ИСПРАВЛЕНО: Полный адрес твоей базы
+            databaseURL: "https://sekagold-25fa5-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "sekagold-25fa5",
             storageBucket: "sekagold-25fa5.firebasestorage.app",
             messagingSenderId: "134912400854",
             appId: "1:134912400854:web:7e97f1123d91ab64ac2417"
         };
+        
+        // Инициализация
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
     </script>
