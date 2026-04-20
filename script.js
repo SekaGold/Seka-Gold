@@ -1,39 +1,34 @@
 let myName = "", pBalance = 1000, myCards = [], gameId = "main_room";
 
-// Данные карт
 const suits = [{s:'♥',c:'red',k:'h'}, {s:'♦',c:'red',k:'d'}, {s:'♣',c:'black',k:'c'}, {s:'♠',c:'black',k:'s'}];
 const ranks = [{n:'6',v:6}, {n:'7',v:7}, {n:'8',v:8}, {n:'9',v:9}, {n:'10',v:10}, {n:'J',v:10}, {n:'Q',v:10}, {n:'K',v:10}, {n:'A',v:11}];
 
-// 1. Вход в игру
 document.getElementById('join-btn').onclick = () => {
     myName = document.getElementById('username').value.trim();
     if (!myName) return alert("Введи ник!");
     document.getElementById('auth-screen').style.display = "none";
-    initOnline();
+    initGame();
 };
 
-function initOnline() {
-    const statusLabel = document.getElementById('score-display');
-    
+function initGame() {
+    const status = document.getElementById('score-display');
+
     // ПРОВЕРКА СВЯЗИ
     db.ref(".info/connected").on("value", (snap) => {
         if (snap.val() === true) {
-            statusLabel.innerText = "Связь установлена! Делайте ставки.";
-            console.log("Connected to Firebase!");
+            status.innerText = "Связь установлена! Можно играть.";
         } else {
-            statusLabel.innerText = "Поиск сервера...";
+            status.innerText = "Поиск сервера...";
         }
     });
 
-    // 2. Слушаем состояние игры
+    // Слушаем базу
     db.ref(`games/${gameId}`).on('value', (snap) => {
         const data = snap.val() || {};
         document.getElementById('pot-display').innerText = `Банк: ${data.pot || 0} 🪙`;
-        
-        // Если кто-то уже сходил, обновляем статус
-        if (data.lastAction) statusLabel.innerText = data.lastAction;
+        if (data.lastAction) status.innerText = data.lastAction;
 
-        // Рисуем рубашки соперников
+        // Рисуем рубашки врагов
         const oppEl = document.getElementById('opponent-hand');
         oppEl.innerHTML = '';
         if (data.players) {
@@ -53,7 +48,6 @@ function initOnline() {
     });
 }
 
-// 3. Ставка
 document.getElementById('ante-btn').onclick = () => {
     pBalance -= 10;
     document.getElementById('player-balance').innerText = pBalance;
