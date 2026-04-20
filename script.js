@@ -1,24 +1,39 @@
-let myName = "", pBalance = 1000, myCards = [], gameId = "global_table";
+let myName = "", pBalance = 1000, myCards = [], gameId = "main_room";
 
+// Данные карт
 const suits = [{s:'♥',c:'red',k:'h'}, {s:'♦',c:'red',k:'d'}, {s:'♣',c:'black',k:'c'}, {s:'♠',c:'black',k:'s'}];
 const ranks = [{n:'6',v:6}, {n:'7',v:7}, {n:'8',v:8}, {n:'9',v:9}, {n:'10',v:10}, {n:'J',v:10}, {n:'Q',v:10}, {n:'K',v:10}, {n:'A',v:11}];
 
-// Вход в игру
+// 1. Вход в игру
 document.getElementById('join-btn').onclick = () => {
     myName = document.getElementById('username').value.trim();
-    if (!myName) return alert("Введите имя!");
+    if (!myName) return alert("Введи ник!");
     document.getElementById('auth-screen').style.display = "none";
     initOnline();
 };
 
 function initOnline() {
-    // 1. Слушаем состояние игры
+    const statusLabel = document.getElementById('score-display');
+    
+    // ПРОВЕРКА СВЯЗИ
+    db.ref(".info/connected").on("value", (snap) => {
+        if (snap.val() === true) {
+            statusLabel.innerText = "Связь установлена! Делайте ставки.";
+            console.log("Connected to Firebase!");
+        } else {
+            statusLabel.innerText = "Поиск сервера...";
+        }
+    });
+
+    // 2. Слушаем состояние игры
     db.ref(`games/${gameId}`).on('value', (snap) => {
         const data = snap.val() || {};
         document.getElementById('pot-display').innerText = `Банк: ${data.pot || 0} 🪙`;
-        document.getElementById('score-display').innerText = data.lastAction || "Ждем ставок...";
+        
+        // Если кто-то уже сходил, обновляем статус
+        if (data.lastAction) statusLabel.innerText = data.lastAction;
 
-        // 2. Рисуем карты противников (рубашки)
+        // Рисуем рубашки соперников
         const oppEl = document.getElementById('opponent-hand');
         oppEl.innerHTML = '';
         if (data.players) {
@@ -28,29 +43,24 @@ function initOnline() {
                         let c = document.createElement('div');
                         c.className = 'card';
                         c.style.background = 'linear-gradient(#2196f3, #1565c0)';
-                        c.innerHTML = '<div style="color:white;font-size:11px">SEKA</div>';
+                        c.innerHTML = '<div style="color:white;font-size:10px;margin-top:40px">SEKA</div>';
                         oppEl.appendChild(c);
                     }
                 }
             });
         }
-
-        // 3. Управление кнопками
         document.getElementById('show-btn').style.display = (data.status === "playing") ? "inline-block" : "none";
-        document.getElementById('reset-btn').style.display = (data.status === "finished") ? "inline-block" : "none";
     });
 }
 
-// Ставка "Вход"
+// 3. Ставка
 document.getElementById('ante-btn').onclick = () => {
-    if (pBalance < 10) return alert("Мало монет!");
     pBalance -= 10;
     document.getElementById('player-balance').innerText = pBalance;
-
     myCards = [draw(), draw(), draw()];
     renderCards('player-hand', myCards);
 
-    // Отправляем данные в онлайн
+    // Отправляем в онлайн
     db.ref(`games/${gameId}/players/${myName}`).set({ status: "playing", cards: myCards });
     db.ref(`games/${gameId}`).update({
         pot: firebase.database.ServerValue.increment(10),
@@ -60,23 +70,7 @@ document.getElementById('ante-btn').onclick = () => {
     document.getElementById('ante-btn').style.display = "none";
 };
 
-// Кнопка вскрытия
-document.getElementById('show-btn').onclick = () => {
-    db.ref(`games/${gameId}`).update({
-        status: "finished",
-        lastAction: `${myName} вскрыл карты!`
-    });
-};
-
-// Очистка стола
-document.getElementById('reset-btn').onclick = () => {
-    db.ref(`games/${gameId}`).set({ pot: 0, status: "waiting", lastAction: "Новая раздача" });
-    document.getElementById('player-hand').innerHTML = '';
-    document.getElementById('ante-btn').style.display = "inline-block";
-};
-
 function draw() { return {...suits[Math.floor(Math.random()*4)], ...ranks[Math.floor(Math.random()*9)]}; }
-
 function renderCards(id, hand) {
     const el = document.getElementById(id); el.innerHTML = '';
     hand.forEach(c => {
